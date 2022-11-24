@@ -1,0 +1,50 @@
+version: "3.7" # version del docker-compose(?)
+
+services: 
+  nginx: # 1er servicio: nginx
+    image: nginx:stable-alpine # imagen de docker hub que vamos a usar
+    container_name: nginx # nombre para referirse al servicio
+    ports:
+      - 80:80 # puerto de mi pc:puerto del servicio docker
+    volumes:
+      - ./src:/var/www/html # carpeta local/ vincula a carpeta de nginx
+      - ./nginx/conf.d:/etc/nginx/conf.d # archivo local / reflejado en archivo de la imagen
+    depends_on: # para correr este servicio debe estar corriendo php y mysql antes
+      - php_74
+      - mysql
+    networks: # la red que los conecta se llama home_php
+      - home_php
+
+  mysql: # 2do servici
+    image: mysql:${MYSQL_VERSION} # imagen de docker hub
+    container_name: mysql # nombre de referencia del servicio
+    restart: unless-stopped # si tiene algun problema, reinicialo
+    tty: true # para que el contenedor esté siempre activo.
+    ports: 
+      - 3306:3306 # puerto local:puerto del servicio docker
+    volumes:
+      - ./mysql:/var/lib/mysql # carpeta local:carpeta de config de mysql
+    environment: # datos de configuracion del entorno
+      MYSQL_DATABASE: ${MYSQL_DATABASE} # importante que tengan comillas
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      #SERVICE_TAGS: dev
+      #SERVICE_NAME: mysql
+    networks:
+      - home_php # red
+
+  php_74: # 3er servicio
+    build: # este se construira aqui mismo
+      context: . # ruta de referencia ./
+      dockerfile: ./php/Dockerfile_php74 # nombre del archivo de configuracion de la imagen 
+    container_name: php_74 #
+    volumes: # carpeta de proyecto local : carpeta del container que da vida a los archivos PHP
+      - ./src/php_74:/var/www/html/php_74
+    ports:
+      - 7400:80 # 
+    networks:
+      - home_php # red
+
+networks: # declaracion de la red
+  home_php:

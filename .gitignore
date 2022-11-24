@@ -1,0 +1,5 @@
+.env
+mysql/*
+nginx/conf.d/*
+src/php_74/*
+src/php_81/*
